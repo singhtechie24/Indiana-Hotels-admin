@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == 'admin@indianahotels.com' ||
+        firestore.exists(/databases/(default)/documents/staff/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // Room images
+    match /rooms/{roomId}/{allImages=**} {
+      // Anyone can read room images
+      allow read: if true;
+      // Only admin can upload, update, or delete room images
+      allow write: if isAdmin();
+    }
+
+    // User profile images
+    match /users/{userId}/{allImages=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+  }
+} 
