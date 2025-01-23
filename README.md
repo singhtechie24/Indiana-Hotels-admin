@@ -1,65 +1,50 @@
-# Indiana Hotels Admin Dashboard
+# React + TypeScript + Vite
 
-A React-based admin dashboard for managing the Indiana Hotels system.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- Staff management
-- Room management
-- Booking oversight
-- Service request handling
-- User management
-- Analytics and reporting
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Tech Stack
+## Expanding the ESLint configuration
 
-- React
-- TypeScript
-- Tailwind CSS
-- Firebase (Firestore, Authentication, Storage)
-- Vite
+If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
 
-## Getting Started
+- Configure the top-level `parserOptions` property like this:
 
-1. Clone the repository
-```bash
-git clone https://github.com/singhtechie24/Indiana-Hotels-Final.git
-cd indiana-hotels-admin
+```js
+export default tseslint.config({
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
 ```
 
-2. Install dependencies
-```bash
-npm install
+- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
+- Optionally add `...tseslint.configs.stylisticTypeChecked`
+- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+
+```js
+// eslint.config.js
+import react from 'eslint-plugin-react'
+
+export default tseslint.config({
+  // Set the react version
+  settings: { react: { version: '18.3' } },
+  plugins: {
+    // Add the react plugin
+    react,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended rules
+    ...react.configs.recommended.rules,
+    ...react.configs['jsx-runtime'].rules,
+  },
+})
 ```
-
-3. Environment Setup
-- Copy `.env.example` to `.env`
-- Fill in your Firebase configuration
-
-4. Start the development server
-```bash
-npm run dev
-```
-
-## Environment Variables
-
-Create a `.env` file with the following:
-```
-VITE_FIREBASE_API_KEY=<your-firebase-api-key>
-VITE_FIREBASE_AUTH_DOMAIN=<your-firebase-auth-domain>
-VITE_FIREBASE_PROJECT_ID=<your-firebase-project-id>
-VITE_FIREBASE_STORAGE_BUCKET=<your-storage-bucket>
-VITE_FIREBASE_MESSAGING_SENDER_ID=<your-messaging-sender-id>
-VITE_FIREBASE_APP_ID=<your-firebase-app-id>
-```
-
-## Security Notes
-
-- Never commit `.env` files
-- Keep Firebase configuration secure
-- Follow Firebase security rules
-- Protect API keys and sensitive data
-
-## License
-
-This project is licensed under the MIT License
