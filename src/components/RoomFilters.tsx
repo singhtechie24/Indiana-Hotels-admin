@@ -1,95 +1,80 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../constants/theme';
-import { RoomType } from '../types/room';
+import { RoomType } from '../types/shared';
 
 interface RoomFiltersProps {
   selectedType: RoomType | null;
   onTypeChange: (type: RoomType | null) => void;
+  minPrice: number;
+  maxPrice: number;
+  capacity: number;
   onPriceChange: (min: number, max: number) => void;
-  onCapacityChange: (capacity: number | null) => void;
-  selectedMinPrice: number;
-  selectedMaxPrice: number;
-  selectedCapacity: number | null;
+  onCapacityChange: (capacity: number) => void;
 }
-
-const ROOM_TYPES: RoomType[] = ['standard', 'deluxe', 'suite'];
 
 export const RoomFilters: React.FC<RoomFiltersProps> = ({
   selectedType,
   onTypeChange,
-  selectedMinPrice,
-  selectedMaxPrice,
-  selectedCapacity,
+  minPrice,
+  maxPrice,
+  capacity,
   onPriceChange,
-  onCapacityChange,
+  onCapacityChange
 }) => {
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersList}
-      >
-        {ROOM_TYPES.map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[
-              styles.filterButton,
-              selectedType === type && styles.filterButtonActive,
-            ]}
-            onPress={() => onTypeChange(selectedType === type ? null : type)}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                selectedType === type && styles.filterButtonTextActive,
-              ]}
-            >
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-};
+  const roomTypes: RoomType[] = ['standard', 'deluxe', 'suite'];
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.white,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.background,
-  },
-  filtersList: {
-    paddingHorizontal: SPACING.xl,
-  },
-  filterButton: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    marginRight: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-  },
-  filterButtonActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterButtonText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray,
-  },
-  filterButtonTextActive: {
-    color: COLORS.white,
-  },
-}); 
+  return (
+    <div className="p-4 bg-white rounded-lg shadow">
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-medium mb-2">Room Type</h3>
+          <div className="flex gap-2">
+            {roomTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => onTypeChange(selectedType === type ? null : type)}
+                className={`px-4 py-2 rounded-md ${
+                  selectedType === type
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium mb-2">Price Range</h3>
+          <div className="flex gap-4">
+            <input
+              type="number"
+              value={minPrice}
+              onChange={(e) => onPriceChange(Number(e.target.value), maxPrice)}
+              placeholder="Min Price"
+              className="w-full px-3 py-2 border rounded-md"
+            />
+            <input
+              type="number"
+              value={maxPrice}
+              onChange={(e) => onPriceChange(minPrice, Number(e.target.value))}
+              placeholder="Max Price"
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium mb-2">Capacity</h3>
+          <input
+            type="number"
+            value={capacity}
+            onChange={(e) => onCapacityChange(Number(e.target.value))}
+            min={1}
+            className="w-full px-3 py-2 border rounded-md"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}; 

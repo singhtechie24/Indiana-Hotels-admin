@@ -1,152 +1,97 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../constants/theme';
+import React, { useState, useEffect } from 'react';
+import { Room, RoomType } from '../types/shared';
 import { RoomFilters } from '../components/RoomFilters';
-import { getRooms, Room } from '../services/FirestoreService';
+import { getRooms } from '../services/roomService';
 
-export const SearchScreen = () => {
-  const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
+export const SearchScreen: React.FC = () => {
+  const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
-  // Filter states
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedMinPrice, setSelectedMinPrice] = useState(0);
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState(1000);
-  const [selectedCapacity, setSelectedCapacity] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<RoomType | null>(null);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(1000);
+  const [capacity, setCapacity] = useState(1);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        const fetchedRooms = await getRooms();
+        setRooms(fetchedRooms);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch rooms');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, []);
+
+  const filteredRooms = rooms.filter((room) => {
+    if (selectedType && room.type !== selectedType) return false;
+    if (room.pricePerNight < minPrice || room.pricePerNight > maxPrice) return false;
+    if (room.capacity < capacity) return false;
+    return true;
+  });
+
+  const handleRoomPress = (roomId: string) => {
+    // Handle room selection
+    console.log('Selected room:', roomId);
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Find Your Perfect Stay</Text>
-          <Text style={styles.subtitle}>
-            {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} available at Indiana Hotels
-          </Text>
-        </View>
-      </View>
-
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Search Rooms</h1>
+      
       <RoomFilters
         selectedType={selectedType}
         onTypeChange={setSelectedType}
-        selectedMinPrice={selectedMinPrice}
-        selectedMaxPrice={selectedMaxPrice}
-        selectedCapacity={selectedCapacity}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        capacity={capacity}
         onPriceChange={(min, max) => {
-          setSelectedMinPrice(Math.round(min));
-          setSelectedMaxPrice(Math.round(max));
+          setMinPrice(min);
+          setMaxPrice(max);
         }}
-        onCapacityChange={setSelectedCapacity}
+        onCapacityChange={setCapacity}
       />
 
-      <FlatList
-        data={filteredRooms}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.roomCard}
-            onPress={() => handleRoomPress(item)}
-          >
-            <Image source={{ uri: item.images[0] }} style={styles.roomImage} />
-            <View style={styles.roomInfo}>
-              <Text style={styles.roomName}>{item.name}</Text>
-              <Text style={styles.roomType}>{item.type.toUpperCase()}</Text>
-              <Text style={styles.roomPrice}>£{item.price}/night</Text>
-              <View style={styles.roomDetails}>
-                <Text style={styles.roomCapacity}>Up to {item.capacity} guests</Text>
-                <View style={[styles.statusBadge, { backgroundColor: item.status === 'available' ? COLORS.success : COLORS.gray }]}>
-                  <Text style={styles.statusText}>{item.status}</Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.roomsList}
-      />
-    </View>
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : error ? (
+        <div className="text-red-600 py-4">{error}</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {filteredRooms.map((room) => (
+            <div
+              key={room.id}
+              onClick={() => handleRoomPress(room.id)}
+              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              {room.images[0] && (
+                <img
+                  src={room.images[0]}
+                  alt={room.name}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              <div className="p-4">
+                <h3 className="text-xl font-semibold mb-2">{room.name}</h3>
+                <p className="text-gray-600 mb-2">{room.type}</p>
+                <p className="text-gray-800 font-medium">
+                  ${room.pricePerNight} / night
+                </p>
+                <p className="text-gray-600">
+                  Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'people'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  headerContainer: {
-    padding: SPACING.large,
-  },
-  header: {
-    marginBottom: SPACING.medium,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.title,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  subtitle: {
-    fontSize: TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  },
-  roomCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.medium,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  roomImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginRight: SPACING.medium,
-  },
-  roomInfo: {
-    flex: 1,
-  },
-  roomName: {
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  roomType: {
-    fontSize: TYPOGRAPHY.body,
-    color: COLORS.text,
-  },
-  roomPrice: {
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  roomDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.small,
-  },
-  roomCapacity: {
-    fontSize: TYPOGRAPHY.body,
-    color: COLORS.text,
-  },
-  statusBadge: {
-    padding: SPACING.small,
-    borderRadius: 4,
-    marginLeft: SPACING.small,
-  },
-  statusText: {
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  roomsList: {
-    padding: SPACING.medium,
-  },
-}); 
+}; 
